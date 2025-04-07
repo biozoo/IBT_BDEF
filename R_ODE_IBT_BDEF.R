@@ -1,9 +1,8 @@
-# Load the deSolve package
 rm(list = ls());gc()
+# Load the deSolve package
 library(deSolve)
 
-setwd('D:\\data\\Theoretical studies\\feedback\\')
-
+setwd('C:\\data\\Theoretical studies\\feedback\\')
 
 minv <- 10^-10
 # Define the ODE system
@@ -97,7 +96,7 @@ out.final <- data.frame(out.final, CiN=c_impact_n, ZiC=zimpact)
 
 write.csv(out.final, 'out_strongfb.csv', row.names = F)
 
-
+# # Extinction scenario
 # Define the time points at which to solve the ODE
 times.burn <- seq(0, 36500, by = 0.1)
 
@@ -106,7 +105,6 @@ parameters <-     c(theta = 25, bn= 0.05, bz = 0.2, mu_n = 0.6, mu_z = 0.3, b1 =
                     tz = 0.4, eb = -0.9, ec = 1.0, N0 = 0.55, q = 0.2)
 
 
-# # Extinction scenario
 # normal parameter: theta = 100, bn= 0.2, bz = 0.2, 
 state <- c(N = 1.0, C = .15, Z = 1.0, R = 15)  # Example initial values
 
@@ -134,45 +132,44 @@ out.final <- data.frame(out.final, CiN=c_impact_n, ZiC=zimpact)
 write.csv(out.final, 'outburn_extinct.csv', row.names = F)
 
 ###################################################################################
-## Ploting ver 2
+### Plotting the temporal dynamics of the plankton system under different scenarios
 ind.t <- 1:(365*2)*100
 weakfb <- read.csv('out_weakfb.csv', header = T)[ind.t,]
 strongfb <- read.csv('out_strongfb.csv', header = T)[ind.t,]
-
-weakfb[,-1] <- apply(weakfb[,-1],2,function(x){x-mean(x)})
-strongfb[,-1] <- apply(strongfb[,-1],2,function(x){x-mean(x)})
-
-yrg <- apply(rbind(weakfb,strongfb),2,range,na.rm=T)
-
 exfb <- read.csv('outburn_extinct.csv', header = T)
-exfb <- exfb[1:(10*1)*100,]
-#exfb[,-1] <- apply(exfb[,-1],2,function(x){x-mean(x)})
+exfb <- exfb[1:(15*100),]
 
-win.graph(20,40);par(mfcol=c(5,1),mar=c(4,4,1,1))
-plot(R~time,weakfb,type='l',ylim=yrg[,'R'],ylab='Phytoplankton species richness (R)',xlab='',lwd=2, lty=1, col='grey')
-lines(R~time,strongfb, type='l',ylim=yrg[,'R'],lwd=2)
+wss <- rbind(apply(weakfb,2,min),apply(weakfb,2,max),
+             0.5*(apply(weakfb,2,max)+apply(weakfb,2,min)),
+             apply(weakfb,2,max)-apply(weakfb,2,min)
+)[,-1]
+sss <- rbind(apply(strongfb,2,min),apply(strongfb,2,max),
+             0.5*(apply(strongfb,2,max)+apply(strongfb,2,min)),
+             apply(strongfb,2,max)-apply(strongfb,2,min)
+)[,-1]
 
-plot(C~time,weakfb,type='l',ylim=yrg[,'C'],ylab='Phytoplankton biomass (C)',xlab='',lwd=2, lty=1, col='grey')
-lines(C~time,strongfb, type='l',ylim=yrg[,'C'],lwd=2)
+mxxr <- rbind(apply(rbind(wss[1,],sss[1,]),2,min),apply(rbind(wss[2,],sss[2,]),2,max))
 
-plot(Z~time,weakfb,type='l',ylim=yrg[,'Z'],ylab='Zooplankton biomass (Z)',xlab='',lwd=2, lty=1, col='grey')
-lines(Z~time,strongfb, type='l',ylim=yrg[,'Z'],lwd=2)
+# Compare temporal dynamics under strong vs. weak diversity-mediated feedback (Fig. 4) ----
+win.graph(40,40);par(mfcol=c(5,2),mar=c(4,4,1,4))
+# Scenario of strong feedback
+plot(R~time,strongfb,type='l',ylim=mxxr[,'R'],ylab='Phytoplankton species richness (R)',xlab='',lwd=2, lty=1)
+plot(C~time,strongfb,type='l',ylim=mxxr[,'C'],ylab='Phytoplankton biomass (C)',xlab='',lwd=2, lty=1)
+plot(Z~time,strongfb,type='l',ylim=mxxr[,'Z'],ylab='Zooplankton biomass (Z)',xlab='',lwd=2, lty=1)
+plot(CiN~time,strongfb,type='l',ylim=mxxr[,'CiN'],ylab='Phytoplankton nutrient uptake rate ',xlab='',lwd=2, lty=1)
+plot(ZiC~time,strongfb, type='l',ylim=mxxr[,'ZiC'],ylab='Zooplankton effects on phytoplankton',xlab='',lwd=2, lty=1)
 
-plot(CiN~time,weakfb,type='l',ylim=yrg[,'CiN'],ylab='Phytoplankton nutrient uptake rate ',xlab='',lwd=2, lty=1, col='grey')
-lines(CiN~time,strongfb, type='l',ylim=yrg[,'CiN'],lwd=2)
+# Scenario of weak feedback
+plot(R~time,weakfb,type='l',ylim=mxxr[,'R'],ylab='Phytoplankton species richness (R)',xlab='',lwd=2, lty=1)
+plot(C~time,weakfb,type='l',ylim=mxxr[,'C'],ylab='Phytoplankton biomass (C)',xlab='',lwd=2, lty=1)
+plot(Z~time,weakfb,type='l',ylim=mxxr[,'Z'],ylab='Zooplankton biomass (Z)',xlab='',lwd=2, lty=1)
+plot(CiN~time,weakfb,type='l',ylim=mxxr[,'CiN'],ylab='Phytoplankton nutrient uptake rate ',xlab='',lwd=2, lty=1)
+plot(ZiC~time,weakfb,type='l',ylim=mxxr[,'ZiC'],ylab='Zooplankton effects on phytoplankton',xlab='',lwd=2, lty=1)
 
-plot(ZiC~time,weakfb,type='l',ylim=yrg[,'ZiC'],ylab='Zooplankton effects on phytoplankton',xlab='',lwd=2, lty=1, col='grey')
-lines(ZiC~time,strongfb, type='l',ylim=yrg[,'ZiC'],lwd=2)
-legend('topright',c('Scenario:\nWeak feedback','Strong feedback'),lty=c(1,1),col=c('grey',1),bty='n')
-
-
+# Plot transient dynamics preceding extinction under weak diversity-mediated feedback (Fig. 4)----
 win.graph(20,40);par(mfcol=c(4,1),mar=c(4,4,1,1))
-
 plot(C~time,exfb,type='l',ylab='Phytoplankton biomass (C)',xlab='',lwd=2, lty=1,ylim=c(0,0.12))
-
 plot(R~time,exfb,type='l',ylab='Phytoplankton species richness (R)',xlab='',lwd=2, lty=1)
-
 plot(Z~time,exfb,type='l',ylab='Zooplankton biomass (Z)',xlab='',lwd=2, lty=1)
-
 plot(N~time,exfb,type='l',ylab='Nutrient (N)',xlab='',lwd=2, lty=1)
 
